@@ -1,0 +1,83 @@
+ctmc
+//constants
+
+const int MIN_planning_Modules = 1;
+const int MIN_SafetyProtection_Module = 1;
+const int MIN_controlling_Modules = 1;
+const int MIN_hardware_Modules = 1;
+const int MIN_framework_Module = 1;
+const double failureIncrease;
+
+//rates
+const double lambda_10y = 1/(10*365*24*60*60);
+const double lambda_1y = 1/(365*24*60*60);
+const double lambda_1month = 1/(365*24*60*60);
+const double delta_r= 1/30;
+
+module SafetyProtectionModule
+s : [0..1] init 1; // numbers of safety protection module
+	
+[] s>0 -> s*lambda_1month : (s'=s-1); // failure of a single sensor
+endmodule
+
+module motionPanningModule
+p : [0..1] init 1; // numbers of planning modules
+[] p>0 & s>0 -> p*lambda_1month : (p'=p-1); // failure of a single sensoryd
+[] p>0 & s=0 -> p*lambda_1month*failureIncrease : (p'=p-1); // failure of a single sensoryd when safeprotection module fails
+endmodule
+
+module LaserProcessingModule
+c : [0..1] init 1; // numbers of planning modules
+	
+[] c>0 & s>0 -> c*lambda_1month : (c'=c-1); // failure of a single sensoryd
+[] c>0 & s=0 -> c*lambda_1month*failureIncrease : (c'=c-1); // failure of a single sensoryd when safeprotection module fails
+endmodule
+
+module dataFusionModule
+f : [0..1] init 1; // numbers of planning modules
+
+[] f>0 & s>0 -> f*lambda_1month : (f'=f-1); // failure of a single sensoryd
+[] f>0 & s=0 -> f*lambda_1month*failureIncrease : (f'=f-1); // failure of a single sensoryd when safeprotection module fails
+endmodule
+
+module motionControlModule
+m : [0..1] init 1; // numbers of motion control modules
+	
+[] m>0 & s>0 -> m*lambda_1y : (m'=m-1); // failure of a single sensoryd
+[] m>0 & s=0 -> m*failureIncrease*lambda_1y : (m'=m-1); // failure of a single sensoryd when safeprotection module fails
+[reboot] m=0 -> delta_r : (m'= 1);
+endmodule
+
+module visualProcessingModule
+v : [0..1] init 1; // numbers of visual Processing Module
+	
+[] v>0 & s>0 -> v*lambda_1y : (v'=v-1); // failure of a single sensoryd
+[] v>0 & s=0 -> v*failureIncrease*lambda_1y : (v'=v-1); // failure of a single sensoryd when safeprotection module fails
+[reboot] v=0 -> delta_r : (v'= 1);
+endmodule
+
+module LaserDataAcquisitionModule
+l : [0..1] init 1; // numbers of Laser Data Acquisition Module
+[] l>0 & s>0 -> l*lambda_1y : (l'=l-1); // failure of a single sensoryd
+[] l>0 & s=0 -> l*failureIncrease*lambda_1y : (l'=l-1); // failure of a single sensoryd when safeprotection module fails
+endmodule
+
+module BusDataAcquisitionModule
+b : [0..1] init 1; // numbers of Bus Data Acquisition Module
+[] b>0 & s>0 -> b*lambda_1y : (b'=b-1); // failure of a single sensoryd
+[] b>0 & s=0 -> b*failureIncrease*lambda_1y : (b'=b-1); // failure of a single sensoryd when safeprotection module fails
+endmodule
+
+module VisualdataAcquisitonModule
+q : [0..1] init 1; // numbers of Visual data Acquisiton Module
+[] q>0 & s>0 -> q*lambda_1y : (q'=q-1); // failure of a single sensoryd
+[] q>0 & s=0 -> q*failureIncrease*lambda_1y : (q'=q-1); // failure of a single sensoryd when safeprotection module fails;
+endmodule
+
+module mainProcessor
+a : [0..1] init 1; // numbers of main Processors
+[] a>0 & s>0 -> a*lambda_10y : (a'=a-1); // failure of a single sensoryd
+[] a>0 & s=0 -> a*failureIncrease*lambda_10y : (a'=a-1); // failure of a single sensoryd when safeprotection module fails
+endmodule
+
+formula down = (p<MIN_planning_Modules)|(c<MIN_planning_Modules)|(f<MIN_planning_Modules)|(m<MIN_controlling_Modules)|(v<MIN_controlling_Modules)|(l<MIN_hardware_Modules)|(b<MIN_hardware_Modules)|(q<MIN_hardware_Modules)|(a<MIN_framework_Module);
